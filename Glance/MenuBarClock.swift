@@ -68,7 +68,18 @@ final class MenuBarClock: NSObject {
     func saveKeyFromClipboard() -> Bool {
         guard let key = Self.apiKey(in: NSPasteboard.general) else { return false }
         Keychain.apiKey = key
-        show("✓ API key saved")
+        show("Checking key…")
+        Task {
+            switch await ClaudeClient(apiKey: key).checkKey() {
+            case .some(true):
+                show("✓ API key works")
+            case .some(false):
+                Keychain.apiKey = nil
+                show("⚠ That key didn't work")
+            case .none:
+                show("✓ API key saved")
+            }
+        }
         return true
     }
 

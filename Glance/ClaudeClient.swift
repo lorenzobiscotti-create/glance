@@ -29,6 +29,22 @@ struct ClaudeClient {
     After the first line you may add a blank line and at most two sentences of explanation.
     """
 
+    /// True if the key works, false if the API rejects it, nil if it couldn't tell (e.g. offline).
+    func checkKey() async -> Bool? {
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
+        request.timeoutInterval = 15
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2026-10-21", forHTTPHeaderField: "anthropic-version")
+        guard let (_, response) = try? await URLSession.shared.data(for: request),
+              let status = (response as? HTTPURLResponse)?.statusCode
+        else { return nil }
+        switch status {
+        case 200: return true
+        case 401, 403: return false
+        default: return nil
+        }
+    }
+
     func answer(imagePNG: Data) async throws -> String {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
