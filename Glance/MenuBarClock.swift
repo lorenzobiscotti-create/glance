@@ -13,6 +13,7 @@ final class MenuBarClock: NSObject {
     private let formatter = DateFormatter()
     private let answerItem = NSMenuItem()
     private let copyItem = NSMenuItem(title: "Copy Answer", action: #selector(copyAnswer), keyEquivalent: "")
+    private var modelItems: [NSMenuItem] = []
     private let onToggleWatching: (Bool) -> Void
     private let onCheckForUpdates: () -> Void
     private var timer: Timer?
@@ -156,6 +157,15 @@ final class MenuBarClock: NSObject {
             menu.addItem(hint)
         }
         menu.addItem(.separator())
+        for model in ClaudeClient.Model.allCases {
+            let choice = NSMenuItem(title: model.menuTitle, action: #selector(chooseModel(_:)), keyEquivalent: "")
+            choice.target = self
+            choice.representedObject = model.rawValue
+            choice.state = model == .chosen ? .on : .off
+            menu.addItem(choice)
+            modelItems.append(choice)
+        }
+        menu.addItem(.separator())
         let key = NSMenuItem(title: "Use Copied API Key", action: #selector(setKey), keyEquivalent: "")
         key.target = self
         menu.addItem(key)
@@ -191,6 +201,15 @@ final class MenuBarClock: NSObject {
     }
 
     @objc private func checkForUpdates() { onCheckForUpdates() }
+
+    @objc private func chooseModel(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let model = ClaudeClient.Model(rawValue: raw) else { return }
+        ClaudeClient.Model.chosen = model
+        for item in modelItems {
+            item.state = item === sender ? .on : .off
+        }
+        show("Using \(model.shortName)")
+    }
 
     @objc private func forgetKey() {
         KeyStore.apiKey = nil

@@ -30,4 +30,5 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
 
 Turn **Answer Screenshots** off in Glance's menu to pause it.
 To change the key, copy the new one and click **Use Copied API Key**.
-Cost: about 1–2 cents per answer.
+Glance uses **Opus 5.5** (smarter, about 1–2 cents per answer). Pick **Sonnet 5.5** in Glance's menu
+for faster answers at about half the cost.

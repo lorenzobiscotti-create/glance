@@ -4,7 +4,32 @@ import Foundation
 /// Swift has no official Anthropic SDK, so this calls the REST API directly.
 struct ClaudeClient {
     let apiKey: String
-    var model = "claude-opus-5-5"
+    var model = Model.chosen.rawValue
+
+    enum Model: String, CaseIterable {
+        case opus = "claude-opus-5-5"
+        case sonnet = "claude-sonnet-5-5"
+
+        var menuTitle: String {
+            switch self {
+            case .opus: "Opus 5.5 (smarter)"
+            case .sonnet: "Sonnet 5.5 (faster, half the cost)"
+            }
+        }
+
+        var shortName: String {
+            switch self {
+            case .opus: "Opus 5.5"
+            case .sonnet: "Sonnet 5.5"
+            }
+        }
+
+        /// The model picked in Glance's menu; Opus until changed.
+        static var chosen: Model {
+            get { UserDefaults.standard.string(forKey: "model").flatMap(Model.init) ?? .opus }
+            set { UserDefaults.standard.set(newValue.rawValue, forKey: "model") }
+        }
+    }
 
     enum Input {
         case image(Data)
