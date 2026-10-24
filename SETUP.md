@@ -14,7 +14,7 @@ A menu bar clock that answers screenshots. Needs macOS 14 (Sonoma) or newer.
 4. **System Settings → Control Center → Clock Options → Style: Analog.**
    Hold ⌘ and drag Glance's time where you want it.
 
-Glance updates itself after that. It checks every few hours; click the time →
+Glance updates itself after that. It checks every 30 minutes and when the Mac wakes; click the time →
 **Check for Updates** to check now.
 
 ## Use

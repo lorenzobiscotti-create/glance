@@ -1,6 +1,6 @@
 import AppKit
 
-/// Checks GitHub for a newer build every few hours. When there is one, it
+/// Checks GitHub for a newer build every 30 minutes and on wake. When there is one, it
 /// downloads it, swaps it in for the running copy and restarts Glance.
 @MainActor
 final class Updater {
@@ -18,7 +18,13 @@ final class Updater {
     init(onStatus: @escaping (String) -> Void) {
         self.onStatus = onStatus
         Task { await check() }
-        timer = Timer.scheduledTimer(withTimeInterval: 6 * 60 * 60, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in await self?.check() }
+        }
+        // Timers don't run while the Mac sleeps, so also check on wake.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
             Task { @MainActor in await self?.check() }
         }
     }
