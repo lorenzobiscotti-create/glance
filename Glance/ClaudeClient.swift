@@ -8,6 +8,8 @@ struct ClaudeClient {
 
     enum Input {
         case image(Data)
+        /// A screenshot of the whole screen, taken when nothing was highlighted.
+        case screen(Data)
         case text(String)
     }
 
@@ -27,6 +29,8 @@ struct ClaudeClient {
 
     private static let systemPrompt = """
     The user just picked out part of their screen: either a screenshot of a region or text they highlighted. \
+    If you get their whole screen instead, find the question they're most likely looking at \
+    (usually the obvious or most prominent one) and answer just that. \
     Start with the answer alone on the first line, as short as possible: ideally under 25 characters, \
     such as a word, number, or multiple-choice letter. \
     If it's a question, answer it. If it's text in another language, translate it to English. \
@@ -63,11 +67,9 @@ struct ClaudeClient {
         let content: [[String: Any]]
         switch input {
         case .image(let png):
-            let image: [String: Any] = [
-                "type": "image",
-                "source": ["type": "base64", "media_type": "image/png", "data": png.base64EncodedString()],
-            ]
-            content = [image, ["type": "text", "text": "Answer what's in this screenshot."]]
+            content = [Self.imageBlock(png), ["type": "text", "text": "Answer what's in this screenshot."]]
+        case .screen(let png):
+            content = [Self.imageBlock(png), ["type": "text", "text": "This is my whole screen. Answer the question I'm looking at."]]
         case .text(let text):
             content = [["type": "text", "text": "Answer this highlighted text:\n\n\(text)"]]
         }
@@ -104,5 +106,12 @@ struct ClaudeClient {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw ClaudeError.empty }
         return text
+    }
+
+    private static func imageBlock(_ png: Data) -> [String: Any] {
+        [
+            "type": "image",
+            "source": ["type": "base64", "media_type": "image/png", "data": png.base64EncodedString()],
+        ]
     }
 }

@@ -21,6 +21,7 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
 
 1. Press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box,
    **or** highlight some text (a word, an equation…) and tap **⌘ twice** quickly.
+   With nothing highlighted, ⌘⌘ sends your whole screen and Claude answers the obvious question on it.
    The first time, macOS asks to let Glance use Accessibility (so it can copy the text for you):
    click **Open System Settings** and turn **Glance** on.
 2. A small `·` after the time means it's thinking.

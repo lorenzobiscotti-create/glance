@@ -31,14 +31,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
         updater = Updater(onStatus: { [weak self] status in self?.clock.show(status) })
-        // Double-tapping ⌘ answers the highlighted text.
+        // Double-tapping ⌘ answers the highlighted text, or the whole screen.
         commandTaps = CommandTapWatcher { [weak self] in
             guard let self, self.watcher.isEnabled else { return }
             if !self.watcher.answerSelection() {
                 self.clock.show("⚠ Allow Glance in Accessibility")
             }
         }
-        watcher.onNothingHighlighted = { [weak self] in self?.clock.show("Highlight some text first") }
+        watcher.onNothingCaptured = { [weak self] in self?.clock.show("⚠ Couldn't screenshot the screen") }
         // With no key saved yet, copying one is enough.
         watcher.onTextCopied = { [weak self] in
             guard let self, KeyStore.apiKey == nil else { return }
