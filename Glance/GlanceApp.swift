@@ -18,9 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installEditMenu()
-        watcher = ClipboardWatcher { [weak self] png in
+        watcher = ClipboardWatcher { [weak self] input in
             guard let self else { return }
-            Task { await self.answer(png) }
+            Task { await self.answer(input) }
         }
         clock = MenuBarClock(
             onToggleWatching: { [weak self] on in self?.watcher.isEnabled = on },
@@ -40,7 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func answer(_ png: Data) async {
+    private func answer(_ input: ClaudeClient.Input) async {
         guard let key = KeyStore.apiKey else {
             clock.promptForAPIKey()
             return
@@ -48,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clock.setThinking(true)
         defer { clock.setThinking(false) }
         do {
-            let text = try await ClaudeClient(apiKey: key).answer(imagePNG: png)
+            let text = try await ClaudeClient(apiKey: key).answer(input)
             clock.show(text)
         } catch ClaudeClient.ClaudeError.http(401, _) {
             KeyStore.apiKey = nil

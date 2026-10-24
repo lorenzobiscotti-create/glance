@@ -19,10 +19,11 @@ Glance updates itself after that. It checks every few hours; click the time →
 
 ## Use
 
-1. Press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box.
+1. Press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box,
+   **or** highlight some text (a word, an equation…) and press **⌘C twice** quickly.
 2. A small `·` after the time means it's thinking.
 3. The answer replaces the time for 6 seconds. Click the time to see all of it.
 
-Turn **Answer Screenshots** off in Glance's menu to pause it.
+Turn **Answer Screenshots & Text** off in Glance's menu to pause it.
 To change the key, copy the new one and click **Use Copied API Key**.
 Cost: about 1–2 cents per answer.

@@ -115,13 +115,16 @@ final class MenuBarClock: NSObject {
         menu.addItem(copyItem)
         menu.addItem(.separator())
 
-        let watch = NSMenuItem(title: "Answer Screenshots", action: #selector(toggleWatching(_:)), keyEquivalent: "")
+        let watch = NSMenuItem(title: "Answer Screenshots & Text", action: #selector(toggleWatching(_:)), keyEquivalent: "")
         watch.target = self
         watch.state = .on
         menu.addItem(watch)
-        let hint = NSMenuItem(title: "⌃⇧⌘4, then drag a box", action: nil, keyEquivalent: "")
-        hint.isEnabled = false
-        menu.addItem(hint)
+        for tip in ["⌃⇧⌘4, then drag a box", "Or highlight text, then ⌘C twice"] {
+            let hint = NSMenuItem(title: tip, action: nil, keyEquivalent: "")
+            hint.isEnabled = false
+            menu.addItem(hint)
+        }
+        menu.addItem(.separator())
         let key = NSMenuItem(title: "Use Copied API Key", action: #selector(setKey), keyEquivalent: "")
         key.target = self
         menu.addItem(key)

@@ -1,10 +1,15 @@
 import Foundation
 
-/// Sends a screenshot to the Claude Messages API and returns the answer text.
+/// Sends a screenshot or copied text to the Claude Messages API and returns the answer.
 /// Swift has no official Anthropic SDK, so this calls the REST API directly.
 struct ClaudeClient {
     let apiKey: String
     var model = "claude-opus-5-5"
+
+    enum Input {
+        case image(Data)
+        case text(String)
+    }
 
     enum ClaudeError: LocalizedError {
         case http(Int, String)
@@ -21,7 +26,7 @@ struct ClaudeClient {
     }
 
     private static let systemPrompt = """
-    The image is a region of the user's screen they just highlighted. \
+    The user just picked out part of their screen: either a screenshot of a region or text they highlighted. \
     Start with the answer alone on the first line, as short as possible: ideally under 25 characters, \
     such as a word, number, or multiple-choice letter. \
     If it's a question, answer it. If it's text in another language, translate it to English. \
@@ -45,7 +50,7 @@ struct ClaudeClient {
         }
     }
 
-    func answer(imagePNG: Data) async throws -> String {
+    func answer(_ input: Input) async throws -> String {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 60
@@ -55,12 +60,18 @@ struct ClaudeClient {
         // Lets the API retry on another model if this one refuses.
         request.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
 
-        let image: [String: Any] = [
-            "type": "image",
-            "source": ["type": "base64", "media_type": "image/png", "data": imagePNG.base64EncodedString()],
-        ]
-        let prompt: [String: Any] = ["type": "text", "text": "Answer what's in this screenshot."]
-        let message: [String: Any] = ["role": "user", "content": [image, prompt]]
+        let content: [[String: Any]]
+        switch input {
+        case .image(let png):
+            let image: [String: Any] = [
+                "type": "image",
+                "source": ["type": "base64", "media_type": "image/png", "data": png.base64EncodedString()],
+            ]
+            content = [image, ["type": "text", "text": "Answer what's in this screenshot."]]
+        case .text(let text):
+            content = [["type": "text", "text": "Answer this highlighted text:\n\n\(text)"]]
+        }
+        let message: [String: Any] = ["role": "user", "content": content]
         let body: [String: Any] = [
             "model": model,
             "max_tokens": 4000,
