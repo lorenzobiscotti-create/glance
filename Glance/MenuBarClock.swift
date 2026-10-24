@@ -44,10 +44,10 @@ final class MenuBarClock: NSObject {
         item.button?.title = shortVersion(of: text)
     }
 
-    func promptForAPIKey() {
+    func promptForAPIKey(problem: String? = nil) {
         let alert = NSAlert()
-        alert.messageText = "Anthropic API key"
-        alert.informativeText = "Paste your key from console.anthropic.com. It's stored in your Keychain."
+        alert.messageText = problem ?? "Anthropic API key"
+        alert.informativeText = "Paste your key from console.anthropic.com → API Keys. It starts with sk-ant-api and is stored in your Keychain."
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         field.placeholderString = "sk-ant-…"
         alert.accessoryView = field
@@ -56,8 +56,12 @@ final class MenuBarClock: NSObject {
         NSApp.activate(ignoringOtherApps: true)
         alert.window.initialFirstResponder = field
         if alert.runModal() == .alertFirstButtonReturn {
-            let key = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            Keychain.apiKey = key.isEmpty ? nil : key
+            let key = field.stringValue.filter { !$0.isWhitespace }
+            guard key.hasPrefix("sk-ant-") else {
+                promptForAPIKey(problem: "That doesn't look like an API key")
+                return
+            }
+            Keychain.apiKey = key
         }
     }
 
