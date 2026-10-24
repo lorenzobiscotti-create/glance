@@ -16,6 +16,8 @@ final class MenuBarClock: NSObject {
     private let onToggleWatching: (Bool) -> Void
     private let onCheckForUpdates: () -> Void
     private var timer: Timer?
+    private var dismissTimer: Timer?
+    private var rightShiftWasDown = false
     private var answer: String?
     private var answerUntil: Date?
     private var isThinking = false
@@ -44,6 +46,35 @@ final class MenuBarClock: NSObject {
         setAnswerView(text)
         answerUntil = Date().addingTimeInterval(answerSeconds)
         item.button?.title = shortVersion(of: text)
+        watchForRightShift()
+    }
+
+    /// Pressing right Shift brings the time back straight away. Polling the key
+    /// needs no permission, and only runs while an answer is showing.
+    private func watchForRightShift() {
+        dismissTimer?.invalidate()
+        rightShiftWasDown = Self.isRightShiftDown
+        dismissTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkRightShift() }
+        }
+    }
+
+    private func checkRightShift() {
+        guard let answerUntil, Date() < answerUntil else {
+            dismissTimer?.invalidate()
+            return
+        }
+        let isDown = Self.isRightShiftDown
+        if isDown && !rightShiftWasDown {
+            dismissTimer?.invalidate()
+            self.answerUntil = nil
+            tick()
+        }
+        rightShiftWasDown = isDown
+    }
+
+    private static var isRightShiftDown: Bool {
+        CGEventSource.keyState(.combinedSessionState, key: 60)
     }
 
     /// Asks for the key without a text box: you copy it, then click one button.
@@ -119,7 +150,7 @@ final class MenuBarClock: NSObject {
         watch.target = self
         watch.state = .on
         menu.addItem(watch)
-        for tip in ["Tap ⌘ twice to answer what's on screen", "Or ⌃⇧⌘4, then drag a box"] {
+        for tip in ["Tap ⌘ twice to answer what's on screen", "Or ⌃⇧⌘4, then drag a box", "Right Shift hides the answer"] {
             let hint = NSMenuItem(title: tip, action: nil, keyEquivalent: "")
             hint.isEnabled = false
             menu.addItem(hint)

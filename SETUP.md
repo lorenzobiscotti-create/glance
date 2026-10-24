@@ -25,7 +25,8 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
    click **Open System Settings** and turn **Glance** on.
    To pick out one spot instead, press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box.
 2. A small `·` after the time means it's thinking.
-3. The answer replaces the time for 6 seconds. Click the time to see all of it.
+3. The answer replaces the time for 6 seconds (press **right Shift** to hide it sooner).
+   Click the time to see all of it.
 
 Turn **Answer Screenshots** off in Glance's menu to pause it.
 To change the key, copy the new one and click **Use Copied API Key**.
