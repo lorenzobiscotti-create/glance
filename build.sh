@@ -24,6 +24,7 @@ lipo -create build/Glance-arm64 build/Glance-x86_64 -output "$APP/Contents/MacOS
 # so macOS keeps Glance's Accessibility permission across updates; local builds
 # fall back to an ad-hoc signature.
 codesign --force --sign "${SIGN_IDENTITY:--}" "$APP"
+codesign -d -r- "$APP"
 
 (cd build && ditto -c -k --keepParent Glance.app Glance.zip)
 echo "Built build/Glance.zip"
