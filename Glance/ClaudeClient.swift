@@ -60,9 +60,27 @@ struct ClaudeClient {
     No explanation, working, restating the question, full sentences, hedging, or markdown. \
     Multiple choice: just the choice's letter or number (its words only if the choices are unlabeled). \
     Math: just the final result. Text in another language: just the English translation. \
-    A word or term: a definition of a few words. Several questions on screen: answer only the one they're on. \
-    Good replies look like "B", "42", "1789", "Mitochondria", "x = 3, y = -1".
+    A word or term: a definition of a few words. Word games and puzzles (like Wordle): just the word to play. \
+    Several questions on screen: answer only the one they're on. \
+    Good answers look like "B", "42", "1789", "CRANE", "Mitochondria", "x = 3, y = -1".
     """
+
+    /// The reply must be JSON with one short `answer` field, so there's nowhere to
+    /// put an explanation (Sonnet adds one otherwise). Reasoning stays in thinking.
+    private static let answerFormat: [String: Any] = [
+        "type": "json_schema",
+        "schema": [
+            "type": "object",
+            "properties": [
+                "answer": [
+                    "type": "string",
+                    "description": "Only the bare answer, ideally one to three words. Never an explanation.",
+                ],
+            ],
+            "required": ["answer"],
+            "additionalProperties": false,
+        ] as [String: Any],
+    ]
 
     /// True if the key works, false if the API rejects it, nil if it couldn't tell (e.g. offline).
     func checkKey() async -> Bool? {
@@ -81,6 +99,15 @@ struct ClaudeClient {
     }
 
     func answer(_ input: Input) async throws -> String {
+        do {
+            return try await answer(input, strictFormat: true)
+        } catch ClaudeError.http(400, _) {
+            // Should the API ever reject the answer format, plain text still works.
+            return try await answer(input, strictFormat: false)
+        }
+    }
+
+    private func answer(_ input: Input, strictFormat: Bool) async throws -> String {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 60
@@ -98,12 +125,14 @@ struct ClaudeClient {
             content = [Self.imageBlock(png), ["type": "text", "text": "This is my whole screen. Answer the question I'm looking at."]]
         }
         let message: [String: Any] = ["role": "user", "content": content]
+        // Low effort keeps answers quick; raise to "medium" or "high" for harder problems.
+        var outputConfig: [String: Any] = ["effort": "low"]
+        if strictFormat { outputConfig["format"] = Self.answerFormat }
         let body: [String: Any] = [
             "model": model,
             "max_tokens": 4000,
             "system": Self.systemPrompt,
-            // Low effort keeps answers quick; raise to "medium" or "high" for harder problems.
-            "output_config": ["effort": "low"],
+            "output_config": outputConfig,
             "fallbacks": "default",
             "messages": [message],
         ]
@@ -128,8 +157,12 @@ struct ClaudeClient {
             .compactMap { $0["text"] as? String }
             .joined()
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw ClaudeError.empty }
-        return text
+        let reply = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any]
+        // If the JSON ever comes back broken, fall back to its first line.
+        let answer = (reply?["answer"] as? String ?? text.split(separator: "\n").first.map(String.init) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !answer.isEmpty else { throw ClaudeError.empty }
+        return answer
     }
 
     private static func imageBlock(_ png: Data) -> [String: Any] {
