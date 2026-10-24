@@ -14,13 +14,15 @@ final class MenuBarClock: NSObject {
     private let answerItem = NSMenuItem()
     private let copyItem = NSMenuItem(title: "Copy Answer", action: #selector(copyAnswer), keyEquivalent: "")
     private let onToggleWatching: (Bool) -> Void
+    private let onCheckForUpdates: () -> Void
     private var timer: Timer?
     private var answer: String?
     private var answerUntil: Date?
     private var isThinking = false
 
-    init(onToggleWatching: @escaping (Bool) -> Void) {
+    init(onToggleWatching: @escaping (Bool) -> Void, onCheckForUpdates: @escaping () -> Void) {
         self.onToggleWatching = onToggleWatching
+        self.onCheckForUpdates = onCheckForUpdates
         super.init()
         // Same shape as the system clock, e.g. "Fri Oct 23 3:41 PM".
         formatter.setLocalizedDateFormatFromTemplate("EEE MMM d j:mm")
@@ -67,14 +69,14 @@ final class MenuBarClock: NSObject {
     @discardableResult
     func saveKeyFromClipboard() -> Bool {
         guard let key = Self.apiKey(in: NSPasteboard.general) else { return false }
-        Keychain.apiKey = key
+        KeyStore.apiKey = key
         show("Checking key…")
         Task {
             switch await ClaudeClient(apiKey: key).checkKey() {
             case .some(true):
                 show("✓ API key works")
             case .some(false):
-                Keychain.apiKey = nil
+                KeyStore.apiKey = nil
                 show("⚠ That key didn't work")
             case .none:
                 show("✓ API key saved")
@@ -127,6 +129,14 @@ final class MenuBarClock: NSObject {
         forget.target = self
         menu.addItem(forget)
         menu.addItem(.separator())
+
+        let version = NSMenuItem(title: "Glance build \(Updater.currentBuild)", action: nil, keyEquivalent: "")
+        version.isEnabled = false
+        menu.addItem(version)
+        let update = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "")
+        update.target = self
+        menu.addItem(update)
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Glance", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         item.menu = menu
     }
@@ -146,8 +156,10 @@ final class MenuBarClock: NSObject {
         copyItem.isHidden = false
     }
 
+    @objc private func checkForUpdates() { onCheckForUpdates() }
+
     @objc private func forgetKey() {
-        Keychain.apiKey = nil
+        KeyStore.apiKey = nil
         show("API key removed")
     }
 

@@ -14,6 +14,7 @@ struct GlanceApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clock: MenuBarClock!
     private var watcher: ClipboardWatcher!
+    private var updater: Updater!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installEditMenu()
@@ -21,21 +22,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             Task { await self.answer(png) }
         }
-        clock = MenuBarClock(onToggleWatching: { [weak self] on in
-            self?.watcher.isEnabled = on
-        })
+        clock = MenuBarClock(
+            onToggleWatching: { [weak self] on in self?.watcher.isEnabled = on },
+            onCheckForUpdates: { [weak self] in
+                guard let self else { return }
+                Task { await self.updater.check(userAsked: true) }
+            }
+        )
+        updater = Updater(onStatus: { [weak self] status in self?.clock.show(status) })
         // With no key saved yet, copying one is enough.
         watcher.onTextCopied = { [weak self] in
-            guard let self, Keychain.apiKey == nil else { return }
+            guard let self, KeyStore.apiKey == nil else { return }
             self.clock.saveKeyFromClipboard()
         }
-        if Keychain.apiKey == nil && !clock.saveKeyFromClipboard() {
+        if KeyStore.apiKey == nil && !clock.saveKeyFromClipboard() {
             clock.promptForAPIKey()
         }
     }
 
     private func answer(_ png: Data) async {
-        guard let key = Keychain.apiKey else {
+        guard let key = KeyStore.apiKey else {
             clock.promptForAPIKey()
             return
         }
@@ -45,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let text = try await ClaudeClient(apiKey: key).answer(imagePNG: png)
             clock.show(text)
         } catch ClaudeClient.ClaudeError.http(401, _) {
-            Keychain.apiKey = nil
+            KeyStore.apiKey = nil
             clock.show("⚠ API key didn't work")
             clock.promptForAPIKey(problem: "That API key didn't work")
         } catch {

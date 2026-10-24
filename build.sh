@@ -10,6 +10,8 @@ SDK="$(xcrun --sdk macosx --show-sdk-path)"
 rm -rf build
 mkdir -p "$APP/Contents/MacOS"
 cp Info.plist "$APP/Contents/Info.plist"
+# The updater compares this number with the newest GitHub release (build-N).
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER:-0}" "$APP/Contents/Info.plist"
 
 for arch in arm64 x86_64; do
     xcrun swiftc -O -parse-as-library -swift-version 5 \
