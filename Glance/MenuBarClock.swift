@@ -22,6 +22,7 @@ final class MenuBarClock: NSObject {
     private var answer: String?
     private var answerUntil: Date?
     private var isThinking = false
+    private var isListening = false
 
     init(onToggleWatching: @escaping (Bool) -> Void, onCheckForUpdates: @escaping () -> Void) {
         self.onToggleWatching = onToggleWatching
@@ -39,6 +40,13 @@ final class MenuBarClock: NSObject {
 
     func setThinking(_ thinking: Bool) {
         isThinking = thinking
+        tick()
+    }
+
+    /// A small ✎ after the time while Glance is catching a typed question.
+    func setListening(_ listening: Bool) {
+        isListening = listening
+        if listening { answerUntil = nil }
         tick()
     }
 
@@ -128,7 +136,7 @@ final class MenuBarClock: NSObject {
         if let answerUntil, Date() < answerUntil { return }
         answerUntil = nil
         let time = formatter.string(from: Date())
-        item.button?.title = isThinking ? time + " ·" : time
+        item.button?.title = isListening ? time + " ✎" : isThinking ? time + " ·" : time
     }
 
     /// The first line of the answer, cut to fit the menu bar.
@@ -151,7 +159,8 @@ final class MenuBarClock: NSObject {
         watch.target = self
         watch.state = .on
         menu.addItem(watch)
-        for tip in ["Tap ⌘ twice to answer what's on screen", "Or ⌃⇧⌘4, then drag a box", "⌥ Option hides the answer"] {
+        for tip in ["Tap ⌘ twice to answer what's on screen", "Tap ⌘ 3 times, type, Return to ask anything",
+                    "Or ⌃⇧⌘4, then drag a box", "⌥ Option hides the answer"] {
             let hint = NSMenuItem(title: tip, action: nil, keyEquivalent: "")
             hint.isEnabled = false
             menu.addItem(hint)

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sends a screenshot to the Claude Messages API and returns the answer.
+/// Sends a screenshot or typed question to the Claude Messages API and returns the answer.
 /// Swift has no official Anthropic SDK, so this calls the REST API directly.
 struct ClaudeClient {
     let apiKey: String
@@ -35,6 +35,8 @@ struct ClaudeClient {
         case image(Data)
         /// A screenshot of the whole screen, taken on a double tap of ⌘.
         case screen(Data)
+        /// Something typed after a triple tap of ⌘.
+        case question(String)
     }
 
     enum ClaudeError: LocalizedError {
@@ -52,7 +54,9 @@ struct ClaudeClient {
     }
 
     private static let systemPrompt = """
-    The user sent a screenshot: either a region they picked out or their whole screen. \
+    The user sent a screenshot (a region they picked out or their whole screen) or typed a question. \
+    For a typed question or request, give the shortest complete answer; \
+    if they ask you to explain something, one short sentence. \
     On a whole screen, find the question they're most likely looking at \
     (anything highlighted, otherwise the obvious or most prominent one) and answer just that. \
     Your reply replaces the clock in the macOS menu bar, which fits about 25 characters, \
@@ -74,7 +78,7 @@ struct ClaudeClient {
             "properties": [
                 "answer": [
                     "type": "string",
-                    "description": "Only the bare answer, ideally one to three words. Never an explanation.",
+                    "description": "Only the bare answer, in as few words as possible. No explanation unless asked for one.",
                 ],
             ],
             "required": ["answer"],
@@ -123,6 +127,8 @@ struct ClaudeClient {
             content = [Self.imageBlock(png), ["type": "text", "text": "Answer what's in this screenshot."]]
         case .screen(let png):
             content = [Self.imageBlock(png), ["type": "text", "text": "This is my whole screen. Answer the question I'm looking at."]]
+        case .question(let text):
+            content = [["type": "text", "text": text]]
         }
         let message: [String: Any] = ["role": "user", "content": content]
         // Low effort keeps answers quick; raise to "medium" or "high" for harder problems.

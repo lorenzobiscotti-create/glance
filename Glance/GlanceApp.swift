@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clock: MenuBarClock!
     private var watcher: ClipboardWatcher!
     private var commandTaps: CommandTapWatcher!
+    private var typed: TypedQuestion!
     private var updater: Updater!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -31,13 +32,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
         updater = Updater(onStatus: { [weak self] status in self?.clock.show(status) })
-        // Double-tapping ⌘ answers whatever question is on screen.
-        commandTaps = CommandTapWatcher { [weak self] in
-            guard let self, self.watcher.isEnabled else { return }
-            if !self.watcher.answerScreen() {
-                self.clock.show("⚠ Allow Glance in Accessibility")
+        typed = TypedQuestion(
+            onQuestion: { [weak self] question in
+                guard let self else { return }
+                Task { await self.answer(.question(question)) }
+            },
+            onListeningChanged: { [weak self] listening in self?.clock.setListening(listening) }
+        )
+        // Double-tapping ⌘ answers whatever question is on screen;
+        // triple-tapping it answers what you type next.
+        commandTaps = CommandTapWatcher(
+            onDoubleTap: { [weak self] in
+                guard let self, self.watcher.isEnabled, !self.typed.isListening else { return }
+                if !self.watcher.answerScreen() {
+                    self.clock.show("⚠ Allow Glance in Accessibility")
+                }
+            },
+            onTripleTap: { [weak self] in
+                guard let self, self.watcher.isEnabled, !self.typed.isListening else { return }
+                if !self.typed.start() {
+                    self.clock.show("⚠ Allow Glance in Accessibility")
+                }
             }
-        }
+        )
         watcher.onNoScreenshot = { [weak self] in self?.clock.show("⚠ Couldn't screenshot the screen") }
         // With no key saved yet, copying one is enough.
         watcher.onTextCopied = { [weak self] in
