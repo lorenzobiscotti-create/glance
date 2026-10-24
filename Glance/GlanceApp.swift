@@ -35,7 +35,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         typed = TypedQuestion(
             onQuestion: { [weak self] question in
                 guard let self else { return }
-                Task { await self.answer(.question(question)) }
+                // Sent with a screenshot, in case the question is about something on screen.
+                if !self.watcher.answerScreen(question: question) {
+                    Task { await self.answer(.question(question, screen: nil)) }
+                }
             },
             onListeningChanged: { [weak self] listening in self?.clock.setListening(listening) }
         )

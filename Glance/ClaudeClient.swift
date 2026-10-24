@@ -35,8 +35,8 @@ struct ClaudeClient {
         case image(Data)
         /// A screenshot of the whole screen, taken on a double tap of ⌘.
         case screen(Data)
-        /// Something typed after a triple tap of ⌘.
-        case question(String)
+        /// Something typed after a triple tap of ⌘, with the screen in case it's about it.
+        case question(String, screen: Data?)
     }
 
     enum ClaudeError: LocalizedError {
@@ -55,6 +55,7 @@ struct ClaudeClient {
 
     private static let systemPrompt = """
     The user sent a screenshot (a region they picked out or their whole screen) or typed a question. \
+    A typed question comes with their screen, which matters only if the question refers to it. \
     For a typed question or request, give the shortest complete answer; \
     if they ask you to explain something, one short sentence. \
     On a whole screen, find the question they're most likely looking at \
@@ -127,7 +128,9 @@ struct ClaudeClient {
             content = [Self.imageBlock(png), ["type": "text", "text": "Answer what's in this screenshot."]]
         case .screen(let png):
             content = [Self.imageBlock(png), ["type": "text", "text": "This is my whole screen. Answer the question I'm looking at."]]
-        case .question(let text):
+        case .question(let text, let screen?):
+            content = [Self.imageBlock(screen), ["type": "text", "text": "My screen is attached in case this is about something on it.\n\n\(text)"]]
+        case .question(let text, nil):
             content = [["type": "text", "text": text]]
         }
         let message: [String: Any] = ["role": "user", "content": content]

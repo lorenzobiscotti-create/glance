@@ -24,7 +24,8 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
    The first time, macOS asks to let Glance use Accessibility (so it can take the screenshot):
    click **Open System Settings** and turn **Glance** on.
    **Tap ⌘ three times** to ask anything: type your question (nothing shows, a small ✎ appears
-   after the time) and press **Return**. **Esc** or a click cancels.
+   after the time) and press **Return**. A screenshot goes along, in case you mean something on screen.
+   **Esc** or a click cancels.
    To pick out one spot instead, press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box.
 2. A small `·` after the time means it's thinking.
 3. The answer replaces the time for 6 seconds (press **⌥ Option** to hide it sooner).

@@ -20,6 +20,8 @@ final class ClipboardWatcher {
     private let onInput: (ClaudeClient.Input) -> Void
     private var lastChange = NSPasteboard.general.changeCount
     private var screenshotUntil: Date?
+    /// A typed question waiting for its screenshot.
+    private var question: String?
     private var timer: Timer?
 
     init(onInput: @escaping (ClaudeClient.Input) -> Void) {
@@ -29,12 +31,14 @@ final class ClipboardWatcher {
         }
     }
 
-    /// Answers whatever question is on screen. Glance presses macOS's own ⌃⇧⌘3,
-    /// which copies the whole screen, so it needs no screen recording permission.
+    /// Answers whatever question is on screen, or `question` with the screen attached
+    /// in case it's about something on it. Glance presses macOS's own ⌃⇧⌘3, which
+    /// copies the whole screen, so it needs no screen recording permission.
     /// Returns false until Glance is allowed in Accessibility, which macOS asks for here.
-    func answerScreen() -> Bool {
+    func answerScreen(question: String? = nil) -> Bool {
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else { return false }
+        self.question = question
         let source = CGEventSource(stateID: .combinedSessionState)
         for keyDown in [true, false] {
             let event = CGEvent(keyboardEventSource: source, virtualKey: Self.threeKey, keyDown: keyDown)
@@ -50,18 +54,34 @@ final class ClipboardWatcher {
         guard pasteboard.changeCount != lastChange else {
             if let until = screenshotUntil, Date() > until {
                 screenshotUntil = nil
-                onNoScreenshot?()
+                if let question {
+                    // No screenshot, but the typed question can still be answered.
+                    self.question = nil
+                    onInput(.question(question, screen: nil))
+                } else {
+                    onNoScreenshot?()
+                }
             }
             return
         }
         lastChange = pasteboard.changeCount
         let isScreen = screenshotUntil.map { Date() < $0 } ?? false
+        let question = isScreen ? question : nil
         screenshotUntil = nil
+        self.question = nil
 
         // Skip files copied in Finder; they carry a name and an icon image too.
-        guard pasteboard.availableType(from: [.fileURL]) == nil else { return }
+        let isFile = pasteboard.availableType(from: [.fileURL]) != nil
+        let hasImage = !isFile && pasteboard.availableType(from: [.png, .tiff]) != nil
+        if let question {
+            // Whatever landed on the clipboard, the typed question still gets answered.
+            let png = hasImage ? NSImage(pasteboard: pasteboard).flatMap(Self.png(from:)) : nil
+            onInput(.question(question, screen: png))
+            return
+        }
+        guard !isFile else { return }
 
-        if pasteboard.availableType(from: [.png, .tiff]) != nil {
+        if hasImage {
             guard isEnabled, let image = NSImage(pasteboard: pasteboard), let png = Self.png(from: image) else { return }
             onInput(isScreen ? .screen(png) : .image(png))
         } else if pasteboard.string(forType: .string) != nil {
