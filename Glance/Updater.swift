@@ -19,9 +19,7 @@ final class Updater {
         self.onStatus = onStatus
         Task { await check() }
         timer = Timer.scheduledTimer(withTimeInterval: 6 * 60 * 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                Task { await self?.check() }
-            }
+            Task { @MainActor in await self?.check() }
         }
     }
 
