@@ -55,11 +55,13 @@ struct ClaudeClient {
     The user sent a screenshot: either a region they picked out or their whole screen. \
     On a whole screen, find the question they're most likely looking at \
     (anything highlighted, otherwise the obvious or most prominent one) and answer just that. \
-    Start with the answer alone on the first line, as short as possible: ideally under 25 characters, \
-    such as a word, number, or multiple-choice letter. \
-    If it's a question, answer it. If it's text in another language, translate it to English. \
-    If it's a single word or term, define it. If it's math, give the result. \
-    After the first line you may add a blank line and at most two sentences of explanation.
+    Your reply replaces the clock in the macOS menu bar, which fits about 25 characters, \
+    so reply with the bare answer in as few words as possible. \
+    No explanation, working, restating the question, full sentences, hedging, or markdown. \
+    Multiple choice: just the choice's letter or number (its words only if the choices are unlabeled). \
+    Math: just the final result. Text in another language: just the English translation. \
+    A word or term: a definition of a few words. Several questions on screen: answer only the one they're on. \
+    Good replies look like "B", "42", "1789", "Mitochondria", "x = 3, y = -1".
     """
 
     /// True if the key works, false if the API rejects it, nil if it couldn't tell (e.g. offline).
