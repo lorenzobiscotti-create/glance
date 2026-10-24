@@ -20,8 +20,10 @@ for arch in arm64 x86_64; do
 done
 lipo -create build/Glance-arm64 build/Glance-x86_64 -output "$APP/Contents/MacOS/Glance"
 
-# Ad-hoc signature: no Apple Developer account needed.
-codesign --force --sign - "$APP"
+# No Apple Developer account needed. CI signs with a fixed self-signed certificate
+# so macOS keeps Glance's Accessibility permission across updates; local builds
+# fall back to an ad-hoc signature.
+codesign --force --sign "${SIGN_IDENTITY:--}" "$APP"
 
 (cd build && ditto -c -k --keepParent Glance.app Glance.zip)
 echo "Built build/Glance.zip"

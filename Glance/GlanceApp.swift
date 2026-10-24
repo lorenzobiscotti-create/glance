@@ -14,6 +14,7 @@ struct GlanceApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clock: MenuBarClock!
     private var watcher: ClipboardWatcher!
+    private var commandTaps: CommandTapWatcher!
     private var updater: Updater!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -30,6 +31,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
         updater = Updater(onStatus: { [weak self] status in self?.clock.show(status) })
+        // Double-tapping ⌘ answers the highlighted text.
+        commandTaps = CommandTapWatcher { [weak self] in
+            guard let self, self.watcher.isEnabled else { return }
+            if !self.watcher.answerSelection() {
+                self.clock.show("⚠ Allow Glance in Accessibility")
+            }
+        }
+        watcher.onNothingHighlighted = { [weak self] in self?.clock.show("Highlight some text first") }
         // With no key saved yet, copying one is enough.
         watcher.onTextCopied = { [weak self] in
             guard let self, KeyStore.apiKey == nil else { return }

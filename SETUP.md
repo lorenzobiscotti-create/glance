@@ -20,7 +20,9 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
 ## Use
 
 1. Press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box,
-   **or** highlight some text (a word, an equation…) and press **⌘C twice** quickly.
+   **or** highlight some text (a word, an equation…) and tap **⌘ twice** quickly.
+   The first time, macOS asks to let Glance use Accessibility (so it can copy the text for you):
+   click **Open System Settings** and turn **Glance** on.
 2. A small `·` after the time means it's thinking.
 3. The answer replaces the time for 6 seconds. Click the time to see all of it.
 

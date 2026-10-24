@@ -11,8 +11,25 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
+    env:
+      CERT_P12: ${{ secrets.GLANCE_CERT_P12 }}
+      CERT_PASSWORD: ${{ secrets.GLANCE_CERT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+
+      # Same certificate every build, so macOS treats each update as the same app.
+      - name: Load signing certificate
+        if: env.CERT_P12 != ''
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p ci "$KEYCHAIN"
+          security set-keychain-settings "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k ci "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          echo "SIGN_IDENTITY=Glance Self-Signed" >> "$GITHUB_ENV"
 
       - name: Build Glance.app
         run: bash build.sh
