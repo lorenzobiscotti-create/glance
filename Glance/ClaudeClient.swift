@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sends a screenshot or copied text to the Claude Messages API and returns the answer.
+/// Sends a screenshot to the Claude Messages API and returns the answer.
 /// Swift has no official Anthropic SDK, so this calls the REST API directly.
 struct ClaudeClient {
     let apiKey: String
@@ -8,9 +8,8 @@ struct ClaudeClient {
 
     enum Input {
         case image(Data)
-        /// A screenshot of the whole screen, taken when nothing was highlighted.
+        /// A screenshot of the whole screen, taken on a double tap of ⌘.
         case screen(Data)
-        case text(String)
     }
 
     enum ClaudeError: LocalizedError {
@@ -28,9 +27,9 @@ struct ClaudeClient {
     }
 
     private static let systemPrompt = """
-    The user just picked out part of their screen: either a screenshot of a region or text they highlighted. \
-    If you get their whole screen instead, find the question they're most likely looking at \
-    (usually the obvious or most prominent one) and answer just that. \
+    The user sent a screenshot: either a region they picked out or their whole screen. \
+    On a whole screen, find the question they're most likely looking at \
+    (anything highlighted, otherwise the obvious or most prominent one) and answer just that. \
     Start with the answer alone on the first line, as short as possible: ideally under 25 characters, \
     such as a word, number, or multiple-choice letter. \
     If it's a question, answer it. If it's text in another language, translate it to English. \
@@ -70,8 +69,6 @@ struct ClaudeClient {
             content = [Self.imageBlock(png), ["type": "text", "text": "Answer what's in this screenshot."]]
         case .screen(let png):
             content = [Self.imageBlock(png), ["type": "text", "text": "This is my whole screen. Answer the question I'm looking at."]]
-        case .text(let text):
-            content = [["type": "text", "text": "Answer this highlighted text:\n\n\(text)"]]
         }
         let message: [String: Any] = ["role": "user", "content": content]
         let body: [String: Any] = [

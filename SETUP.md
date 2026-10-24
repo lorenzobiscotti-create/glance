@@ -19,14 +19,14 @@ Glance updates itself after that. It checks every 30 minutes and when the Mac wa
 
 ## Use
 
-1. Press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box,
-   **or** highlight some text (a word, an equation…) and tap **⌘ twice** quickly.
-   With nothing highlighted, ⌘⌘ sends your whole screen and Claude answers the obvious question on it.
-   The first time, macOS asks to let Glance use Accessibility (so it can copy the text for you):
+1. Tap **⌘ twice** quickly. Glance screenshots your whole screen and Claude answers the
+   question on it (if you highlighted something, it answers that).
+   The first time, macOS asks to let Glance use Accessibility (so it can take the screenshot):
    click **Open System Settings** and turn **Glance** on.
+   To pick out one spot instead, press **⌃⇧⌘4** (Control + Shift + Command + 4) and drag a box.
 2. A small `·` after the time means it's thinking.
 3. The answer replaces the time for 6 seconds. Click the time to see all of it.
 
-Turn **Answer Screenshots & Text** off in Glance's menu to pause it.
+Turn **Answer Screenshots** off in Glance's menu to pause it.
 To change the key, copy the new one and click **Use Copied API Key**.
 Cost: about 1–2 cents per answer.

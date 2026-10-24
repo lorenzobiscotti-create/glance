@@ -115,11 +115,11 @@ final class MenuBarClock: NSObject {
         menu.addItem(copyItem)
         menu.addItem(.separator())
 
-        let watch = NSMenuItem(title: "Answer Screenshots & Text", action: #selector(toggleWatching(_:)), keyEquivalent: "")
+        let watch = NSMenuItem(title: "Answer Screenshots", action: #selector(toggleWatching(_:)), keyEquivalent: "")
         watch.target = self
         watch.state = .on
         menu.addItem(watch)
-        for tip in ["⌃⇧⌘4, then drag a box", "Or tap ⌘ twice: highlighted text, else the screen"] {
+        for tip in ["Tap ⌘ twice to answer what's on screen", "Or ⌃⇧⌘4, then drag a box"] {
             let hint = NSMenuItem(title: tip, action: nil, keyEquivalent: "")
             hint.isEnabled = false
             menu.addItem(hint)
