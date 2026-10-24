@@ -112,6 +112,9 @@ final class MenuBarClock: NSObject {
         let key = NSMenuItem(title: "Use Copied API Key", action: #selector(setKey), keyEquivalent: "")
         key.target = self
         menu.addItem(key)
+        let forget = NSMenuItem(title: "Remove API Key", action: #selector(forgetKey), keyEquivalent: "")
+        forget.target = self
+        menu.addItem(forget)
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Glance", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         item.menu = menu
@@ -130,6 +133,11 @@ final class MenuBarClock: NSObject {
         answerItem.view = container
         answerItem.isHidden = false
         copyItem.isHidden = false
+    }
+
+    @objc private func forgetKey() {
+        Keychain.apiKey = nil
+        show("API key removed")
     }
 
     @objc private func toggleWatching(_ sender: NSMenuItem) {
