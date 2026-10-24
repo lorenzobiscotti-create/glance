@@ -9,7 +9,8 @@ A menu bar clock that answers screenshots. Needs macOS 14 (Sonoma) or newer.
 2. Double-click `Glance.zip`, then drag **Glance** into **Applications**.
 3. Open Glance. macOS says it can't check it. Click **Done**, go to
    **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
-4. Paste your API key (from console.anthropic.com → API Keys) and click **Save**.
+4. Copy your API key (from console.anthropic.com → API Keys). Glance saves it by itself
+   and shows **✓ API key saved**. No pasting needed.
 5. **System Settings → Control Center → Clock Options → Style: Analog.**
    Hold ⌘ and drag Glance's time where you want it.
 

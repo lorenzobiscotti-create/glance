@@ -24,7 +24,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clock = MenuBarClock(onToggleWatching: { [weak self] on in
             self?.watcher.isEnabled = on
         })
-        if Keychain.apiKey == nil {
+        // With no key saved yet, copying one is enough.
+        watcher.onTextCopied = { [weak self] in
+            guard let self, Keychain.apiKey == nil else { return }
+            self.clock.saveKeyFromClipboard()
+        }
+        if Keychain.apiKey == nil && !clock.saveKeyFromClipboard() {
             clock.promptForAPIKey()
         }
     }

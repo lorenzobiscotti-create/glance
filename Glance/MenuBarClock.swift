@@ -44,25 +44,39 @@ final class MenuBarClock: NSObject {
         item.button?.title = shortVersion(of: text)
     }
 
+    /// Asks for the key without a text box: you copy it, then click one button.
+    /// (Glance also picks up a copied key by itself while it has none.)
     func promptForAPIKey(problem: String? = nil) {
         let alert = NSAlert()
         alert.messageText = problem ?? "Anthropic API key"
-        alert.informativeText = "Paste your key from console.anthropic.com → API Keys. It starts with sk-ant-api and is stored in your Keychain."
-        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        field.placeholderString = "sk-ant-…"
-        alert.accessoryView = field
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
-        NSApp.activate(ignoringOtherApps: true)
-        alert.window.initialFirstResponder = field
+        alert.informativeText = """
+        1. Copy your key from console.anthropic.com → API Keys (it starts with sk-ant-api).
+        2. Click Use Copied Key.
+        """
+        alert.addButton(withTitle: "Use Copied Key")
+        alert.addButton(withTitle: "Later")
+        NSApp.activate()
         if alert.runModal() == .alertFirstButtonReturn {
-            let key = field.stringValue.filter { !$0.isWhitespace }
-            guard key.hasPrefix("sk-ant-") else {
-                promptForAPIKey(problem: "That doesn't look like an API key")
-                return
+            if !saveKeyFromClipboard() {
+                promptForAPIKey(problem: "No API key on the clipboard")
             }
-            Keychain.apiKey = key
         }
+    }
+
+    /// Saves an API key from the clipboard. Returns false if there isn't one.
+    @discardableResult
+    func saveKeyFromClipboard() -> Bool {
+        guard let key = Self.apiKey(in: NSPasteboard.general) else { return false }
+        Keychain.apiKey = key
+        show("✓ API key saved")
+        return true
+    }
+
+    static func apiKey(in pasteboard: NSPasteboard) -> String? {
+        guard let text = pasteboard.string(forType: .string)?.filter({ !$0.isWhitespace }),
+              text.hasPrefix("sk-ant-")
+        else { return nil }
+        return text
     }
 
     private func tick() {
@@ -95,7 +109,7 @@ final class MenuBarClock: NSObject {
         let hint = NSMenuItem(title: "⌃⇧⌘4, then drag a box", action: nil, keyEquivalent: "")
         hint.isEnabled = false
         menu.addItem(hint)
-        let key = NSMenuItem(title: "Set API Key…", action: #selector(setKey), keyEquivalent: "")
+        let key = NSMenuItem(title: "Use Copied API Key", action: #selector(setKey), keyEquivalent: "")
         key.target = self
         menu.addItem(key)
         menu.addItem(.separator())
@@ -122,7 +136,9 @@ final class MenuBarClock: NSObject {
         sender.state = sender.state == .on ? .off : .on
         onToggleWatching(sender.state == .on)
     }
-    @objc private func setKey() { promptForAPIKey() }
+    @objc private func setKey() {
+        if !saveKeyFromClipboard() { promptForAPIKey(problem: "No API key on the clipboard") }
+    }
 
     @objc private func copyAnswer() {
         guard let answer else { return }

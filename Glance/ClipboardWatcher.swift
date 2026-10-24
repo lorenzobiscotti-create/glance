@@ -5,6 +5,8 @@ import AppKit
 @MainActor
 final class ClipboardWatcher {
     var isEnabled = true
+    /// Called whenever new text lands on the clipboard.
+    var onTextCopied: (() -> Void)?
 
     /// Longest side sent to Claude; bigger images are downscaled by the API anyway.
     private static let maxSide: CGFloat = 1568
@@ -24,6 +26,10 @@ final class ClipboardWatcher {
         let pasteboard = NSPasteboard.general
         guard pasteboard.changeCount != lastChange else { return }
         lastChange = pasteboard.changeCount
+
+        if pasteboard.availableType(from: [.string]) != nil {
+            onTextCopied?()
+        }
 
         // Skip files copied in Finder; they carry an icon image too.
         guard isEnabled,
